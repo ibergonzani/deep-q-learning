@@ -7,8 +7,6 @@ import os
 
 class PickleSerializer():
 	
-	max_bytes = 2**31 - 1
-	
 	@staticmethod
 	def save(obj, path):
 		with open(path, 'wb') as outfile:
@@ -97,3 +95,28 @@ class GameStats():
 	
 	def stepsPerGame(self):
 		return [len(self.games_rewards[i]) for i in range(len(self.games_rewards))]
+		
+		
+		
+		
+def plotGameStats(game_stats, path, episodes_span=25):
+	missing_episodes = episodes_span - (game_stats.totalGames() % episodes_span)
+	
+	rewards = game_stats.cumulativeReward() + [0] * missing_episodes
+	rewards = np.reshape(rewards, [-1, episodes_span])[:-1] #last games is not considered because of padding
+	mean_span_rewards = np.mean(rewards, axis=1)
+	
+	games_steps = game_stats.stepsPerGame() + [0] * missing_episodes
+	games_steps = np.reshape(games_steps, [-1, episodes_span])[:-1]
+	span_steps = np.sum(games_steps, axis=1)
+	
+	fig, ax = plt.subplots()
+	ax.plot(span_steps, mean_span_rewards))
+
+	ax.set(xlabel='Frames', ylabel='reward (clipped)', title='Mean rewards over {:d} episodes'.format(episodes_span))
+	ax.grid()
+	
+	fig.savefig(path)
+	plt.show()
+	
+	

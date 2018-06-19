@@ -80,7 +80,7 @@ if __name__ == "__main__":
 	########## LOAD ENVIRONMENT AND BUILD NETWORK ##########
 	env = gym.make(ENVIRONMENT)
 	env = atari_wrappers.wrap_deepmind(env, frame_stack=True, clip_rewards=True)
-	#env = atari_wrappers.MaxAndSkipEnv(env, skip=3)
+	env = atari_wrappers.MaxAndSkipEnv(env, skip=3)
 	#env = atari_wrappers.CenteredScaledFloatFrame(env)
 
 	optimizer = tf.train.AdamOptimizer(learning_rate=1e-4)
@@ -125,7 +125,7 @@ if __name__ == "__main__":
 				print("Game %d completed. Reward: %d" % (trn.game_stats.totalGames(), trn.game_stats.lastGameReward()))
 				state = env.reset()
 			
-			if random.uniform(0.0, 1.0) < trn.getEpsilon(step):
+			if np.random.uniform() < trn.getEpsilon(step):
 				action = env.action_space.sample()
 			else:
 				action = net.takeAction(sess, state)
