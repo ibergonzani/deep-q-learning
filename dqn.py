@@ -38,7 +38,7 @@ class DQN():
 				self.tvars.sort(key=lambda x: x.name)
 			
 			# target network weights update operations
-			self.update_target_op = [vars[0].assign(vars[1]) for vars in zip(self.tvars, self.qvars)]
+			self.update_target_op = [var[0].assign(var[1]) for var in zip(self.tvars, self.qvars)]
 		
 		# training operations definition
 		self.yt_loss = tf.placeholder(tf.float32, shape=(None))
@@ -60,12 +60,12 @@ class DQN():
 		output = tf.layers.dense(inputs=fc1, units=num_actions, activation=None)
 		return output
 	
+	
 	# update target network weights 
 	def updateTargetNetwork(self, sess):
 		if self.use_target_network or self.use_double_dqn:
-			print("Updating target network")
 			sess.run(self.update_target_op)
-	
+			
 	
 	def updateModel(self, sess, batch):
 		states, actions, rewards, new_states, endgames = batch
@@ -101,17 +101,18 @@ class DQN():
 class DuelingDQN(DQN):
 	
 	# just redefine the network architecture
-	def _network(self, input_shape, num_actions):
-		
-		input = tf.placeholder(tf.float32, shape=input_shape)
-		conv1 = tf.layers.conv2d(inputs=input, filters=16, kernel_size=[8,8], strides=[4,4], activation=tf.nn.relu)
-		conv2 = tf.layers.conv2d(inputs=conv1, filters=32, kernel_size=[4,4], strides=[2,2], activation=tf.nn.relu)
-		fc1 = tf.layers.dense(inputs=conv2, units=50, activation=tf.nn.relu)
-		fc2a = tf.layers.dense(inputs=fc1, units=25, activation=tf.nn.relu)
-		fc2b = tf.layers.dense(inputs=fc1, units=25, activation=tf.nn.relu)
-		fc3a = tf.layers.dense(inputs=fc2a, units=1, activation=tf.nn.relu)
-		fc3b = tf.layers.dense(inputs=fc2b, units=num_actions, activation=tf.nn.relu)
-		output = tf.scalar_sum(fc3a, fc3b)
+	def _network(self, input, num_actions):
+		conv1 = tf.layers.conv2d(inputs=input, filters=32, kernel_size=(8,8), strides=(4,4), activation=tf.nn.relu)
+		conv2 = tf.layers.conv2d(inputs=conv1, filters=64, kernel_size=(4,4), strides=(2,2), activation=tf.nn.relu)
+		conv3 = tf.layers.conv2d(inputs=conv1, filters=64, kernel_size=(3,3), strides=(1,1), activation=tf.nn.relu)
+		conv3 = tf.contrib.layers.flatten(conv3)
+		# advantage stream
+		fc1a = tf.layers.dense(inputs=conv3, units=512, activation=tf.nn.relu)
+		fc1v = tf.layers.dense(inputs=conv3, units=512, activation=tf.nn.relu)
+		# value stream
+		advantage = tf.layers.dense(inputs=fc1a, units=num_actions, activation=tf.nn.relu)
+		value = tf.layers.dense(inputs=fc1v, units=1, activation=tf.nn.relu)
+		output = tf.reshape(value, [-1, 1]) + (advantage - tf.reduce_mean(advantage, axis=1, keep_dims=True))
 		
 		return output
 		

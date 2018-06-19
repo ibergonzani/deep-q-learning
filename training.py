@@ -79,7 +79,7 @@ if __name__ == "__main__":
 
 	########## LOAD ENVIRONMENT AND BUILD NETWORK ##########
 	env = gym.make(ENVIRONMENT)
-	env = atari_wrappers.wrap_deepmind(env, frame_stack=True, clip_rewards=False)
+	env = atari_wrappers.wrap_deepmind(env, frame_stack=True, clip_rewards=True)
 	#env = atari_wrappers.MaxAndSkipEnv(env, skip=3)
 	#env = atari_wrappers.CenteredScaledFloatFrame(env)
 
