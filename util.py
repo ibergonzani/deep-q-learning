@@ -1,4 +1,5 @@
 import numpy as np
+import matplotlib.pyplot as plt
 import random
 import json
 import pickle
@@ -88,7 +89,7 @@ class GameStats():
 		return sum(self.games_rewards[-1])
 		
 	def meanReward(self):
-		return np.amean(np.array(self.games_rewards), axis=1)
+		return np.mean(np.array(self.games_rewards), axis=1)
 	
 	def cumulativeReward(self):
 		return [sum(self.games_rewards[i]) for i in range(len(self.games_rewards))]
@@ -99,22 +100,31 @@ class GameStats():
 		
 		
 		
-def plotGameStats(game_stats, path, episodes_span=25):
-	missing_episodes = episodes_span - (game_stats.totalGames() % episodes_span)
+def plotGameStats(game_stats, path, episodes_span=25, labels=None, colours=None):
 	
-	rewards = game_stats.cumulativeReward() + [0] * missing_episodes
-	rewards = np.reshape(rewards, [-1, episodes_span])[:-1] #last games is not considered because of padding
-	mean_span_rewards = np.mean(rewards, axis=1)
-	
-	games_steps = game_stats.stepsPerGame() + [0] * missing_episodes
-	games_steps = np.reshape(games_steps, [-1, episodes_span])[:-1]
-	span_steps = np.sum(games_steps, axis=1)
 	
 	fig, ax = plt.subplots()
-	ax.plot(span_steps, mean_span_rewards))
-
-	ax.set(xlabel='Frames', ylabel='reward (clipped)', title='Mean rewards over {:d} episodes'.format(episodes_span))
+	
+	for n, gs in enumerate(game_stats):
+		missing_episodes = episodes_span - (gs.totalGames() % episodes_span)
+		
+		rewards = gs.cumulativeReward() + [0] * missing_episodes
+		rewards = np.reshape(rewards, [-1, episodes_span])[:-1] #last games is not considered because of padding
+		mean_span_rewards = np.mean(rewards, axis=1)
+		
+		games_steps = gs.stepsPerGame() + [0] * missing_episodes
+		games_steps = np.reshape(games_steps, [-1, episodes_span])[:-1]
+		games_steps = np.sum(games_steps, axis=1)
+		span_steps = [np.sum(games_steps[:i+1]) for i in range(len(games_steps))] #np.sum(games_steps, axis=1)
+		
+		label = labels[n] if labels != None else ""
+		colour = colours[n] if colours != None else "#0F0F0F"
+		ax.plot(span_steps, mean_span_rewards, label=label, color=colour, linewidth=2-(n))
+		
+	ax.set(xlabel='frames', ylabel='reward (clipped)', title='Mean rewards over {:d} episodes'.format(episodes_span))
 	ax.grid()
+	if labels != None:
+		ax.legend()
 	
 	fig.savefig(path)
 	plt.show()
