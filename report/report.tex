@@ -1,0 +1,59 @@
+%++++++++++++++++++++++++++++++++++++++++
+% Don't modify this section unless you know what you're doing!
+\documentclass[article,11pt]{article}
+\usepackage{tabularx} % extra features for tabular environment
+\usepackage{amsmath}  % improve math presentation
+\usepackage{graphicx} % takes care of graphic including machinery
+\usepackage[margin=1in,letterpaper]{geometry} % decreases margins
+\usepackage{cite} % takes care of citations
+\usepackage[final]{hyperref} % adds hyper links inside the generated pdf file
+\hypersetup{
+	colorlinks=true,       % false: boxed links; true: colored links
+	linkcolor=blue,        % color of internal links
+	citecolor=blue,        % color of links to bibliography
+	filecolor=magenta,     % color of file links
+	urlcolor=blue         
+}
+%++++++++++++++++++++++++++++++++++++++++
+
+
+\begin{document}
+	
+	\title{Reinforcement Learning Project\\Learn Atari game \textit{Gopher} through Deep Reinforcement Learning}
+	\author{Ivan Bergonzani}
+	\date{\today}
+	\maketitle
+	
+	\begin{abstract}
+		In this project were tested different deep Q network architectures against the Atari 2600 game 'Gopher'.
+		Base Deep Q network from \cite{dqn2013}\cite{dqn2015} together with Double Q network \cite{doubledqn} and Dueling DQN \cite{duelingdqn} were trained on the environment provided by OpenAI Gym for a total of 2 million frames each. Despite the smaller training time with respect to the original articles, the three network were able to learn the game. They were tested over a 1000 epsiodes scoring respectively a mean reward of 150, 152, 1521.
+		
+	\end{abstract}
+	
+	
+	\section{Introduction}
+	
+	The very important physical effect has applications to astronomy, nuclear physics, condensed matter, and more. 
+	
+
+	\section{Deep Reinforcement Learning}
+
+	\subsection{Double Q Learning}
+	
+	\subsection{Dueling Q network}
+	
+	\section{Experiments}
+	
+	\section{Conclusion}
+	
+	%++++++++++++++++++++++++++++++++++++++++
+	% References section will be created automatically 
+	% with inclusion of "thebibliography" environment
+	% as it shown below. See text starting with line
+	% \begin{thebibliography}{99}
+	% Note: with this approach it is YOUR responsibility to put them in order
+	% of appearance.
+	
+	\bibliography{bibliography}
+	\bibliographystyle{plain}
+\end{document}

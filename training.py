@@ -121,7 +121,7 @@ if __name__ == "__main__":
 		
 		# Training procedure
 		for step in range(trn.current_step, trn.train_steps):
-			print("Training step %d/%d" % (step+1, trn.train_steps), end="\r")
+			print("Training step %d/%d\t%f" % (step+1, trn.train_steps, trn.getEpsilon(step)), end="\r")
 			
 			if endgame:
 				print("Game %d completed. Reward: %d" % (trn.game_stats.totalGames(), trn.game_stats.lastGameReward()))
