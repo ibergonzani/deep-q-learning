@@ -19,7 +19,21 @@ class PickleSerializer():
 			data = pickle.load(infile)
 		for key, value in data.items():
 			obj.__dict__[key] = value
-				
+
+
+class JSONSerializer():
+
+	@staticmethod
+	def save(obj, path):
+		with open(path, 'wb') as outfile:
+			json.dump(obj.__dict__, outfile)
+	
+	@staticmethod
+	def load(obj, path):
+		with open(path, 'rb') as infile:
+			data = json.load(infile)
+		for key, value in data.items():
+			obj.__dict__[key] = value
 
 
 # Buffer with a defined capacity that can be preallocated using a default value or .
@@ -100,10 +114,9 @@ class GameStats():
 		
 		
 		
-def plotGameStats(game_stats, path, episodes_span=25, labels=None, colours=None):
+def plotGameStats(game_stats, path, episodes_span=25, labels=None, colours=None, show=False):
 	
-	
-	fig, ax = plt.subplots()
+	fig1, ax1 = plt.subplots()
 	
 	for n, gs in enumerate(game_stats):
 		missing_episodes = episodes_span - (gs.totalGames() % episodes_span)
@@ -119,14 +132,18 @@ def plotGameStats(game_stats, path, episodes_span=25, labels=None, colours=None)
 		
 		label = labels[n] if labels != None else ""
 		colour = colours[n] if colours != None else "#0F0F0F"
-		ax.plot(span_steps, mean_span_rewards, label=label, color=colour, linewidth=2-(n))
+		ax1.plot(span_steps, mean_span_rewards, label=label, color=colour, linewidth=2-(n))
 		
-	ax.set(xlabel='frames', ylabel='reward (clipped)', title='Mean rewards over {:d} episodes'.format(episodes_span))
-	ax.grid()
+	ax1.set(xlabel='frames', ylabel='reward (clipped)', title='Mean rewards over {:d} episodes'.format(episodes_span))
+	ax1.grid()
 	if labels != None:
-		ax.legend()
+		ax1.legend()
 	
-	fig.savefig(path)
-	plt.show()
+	fig1.savefig(path)
+	
+	if show:
+		plt.show()
+	
+	plt.close(fig1)
 	
 	

@@ -1,2 +1,4 @@
 model*/
+test/
+*.png
 __pycache__/

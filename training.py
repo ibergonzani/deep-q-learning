@@ -23,7 +23,7 @@ class TrainingInfo():
 		
 		self.batch_size = 32				# number of transitions used for each model update
 		
-		self.train_steps = 1000000			# total number of frames in the training
+		self.train_steps = 2000000			# total number of frames in the training
 		self.pre_train_steps = 50000		# number of initial random steps (actions)
 		self.target_network_steps = 10000	# number of frames between each update of the target network
 		
@@ -32,7 +32,7 @@ class TrainingInfo():
 		self.epsilon_start = 1.0			# initial value for epsilon
 		self.epsilon_end = 0.02				# final value for epsilon
 		self.epsilon_start_frame = 0		# starting frame for epsilon linear decrease
-		self.epsilon_end_frame = 500000		# endign frame for epsilon linear decrease
+		self.epsilon_end_frame = 1000000	# endign frame for epsilon linear decrease
 		
 	
 	# just increase the total number of steps(frames) of the training
@@ -82,8 +82,10 @@ if __name__ == "__main__":
 	env = atari_wrappers.wrap_deepmind(env, frame_stack=True, clip_rewards=True)
 	env = atari_wrappers.MaxAndSkipEnv(env, skip=3)
 	#env = atari_wrappers.CenteredScaledFloatFrame(env)
-
-	optimizer = tf.train.AdamOptimizer(learning_rate=1e-4)
+	
+	optimizer = tf.train.RMSPropOptimizer(learning_rate=0.00025, momentum=0.95, epsilon=0.01)
+	
+	#optimizer = tf.train.AdamOptimizer(learning_rate=1e-4)
 	use_target_network = False if NETWORK.startswith('double') else True
 	use_double_dqn = True if NETWORK.startswith('double') else False
 	
@@ -110,7 +112,7 @@ if __name__ == "__main__":
 		if TRAINING_INFO != None:
 			print("Restoring training informations: experience replay buffer, games statistics")
 			util.PickleSerializer.load(trn, TRAINING_INFO)
-			trn.game_stats.deleteCurrentGame()
+			trn.game_stats.deleteCurrentGame()			
 		
 		if additional_training_steps != None:
 			trn.addSteps(additional_training_steps)
@@ -143,9 +145,9 @@ if __name__ == "__main__":
 			if step % trn.target_network_steps == 0:
 				net.updateTargetNetwork(sess)
 			
+			trn.current_step = step + 1 	# in order to resume to next step and not this one
+						
 			if step % CHECKPOINT_STEPS == 0 and step != 0:
-				trn.current_step = step + 1 	# in order to resume to next step and not this one
-				
 				print("\nSave checkpoint:", step, "steps")
 				checkpoint_path = MODEL_FOLDER + MODEL_NAME			
 				saver.save(sess, checkpoint_path, global_step=step)
@@ -157,5 +159,9 @@ if __name__ == "__main__":
 		model_path = MODEL_FOLDER + MODEL_NAME
 		saver.save(sess, model_path)
 		
-		experience_buffer_path = MODEL_FOLDER + 'training_info.plk'
+		experience_buffer_path = MODEL_FOLDER + 'training_info.pkl'
 		util.PickleSerializer.save(trn, experience_buffer_path)
+		training_rewards = MODEL_FOLDER + 'training_rewards.pkl'
+		util.PickleSerializer.save(trn.game_stats, training_rewards)
+		
+		util.plotGameStats([trn.game_stats], "duelingdqn_1M", episodes_span=25, labels=["dueling dqn"])
