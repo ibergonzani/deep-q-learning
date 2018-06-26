@@ -30,7 +30,7 @@ class TrainingInfo():
 		self.current_step = 0				# current step in training (Here just used for checkpoint saves) 
 		
 		self.epsilon_start = 1.0			# initial value for epsilon
-		self.epsilon_end = 0.02				# final value for epsilon
+		self.epsilon_end = 0.1				# final value for epsilon
 		self.epsilon_start_frame = 0		# starting frame for epsilon linear decrease
 		self.epsilon_end_frame = 1000000	# endign frame for epsilon linear decrease
 		

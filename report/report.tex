@@ -3,6 +3,7 @@
 \documentclass[article,11pt]{article}
 \usepackage{tabularx} % extra features for tabular environment
 \usepackage{amsmath}  % improve math presentation
+\usepackage{amssymb}
 \usepackage{graphicx} % takes care of graphic including machinery
 \usepackage[margin=1in,letterpaper]{geometry} % decreases margins
 \usepackage{cite} % takes care of citations
@@ -26,33 +27,45 @@
 	
 	\begin{abstract}
 		In this project were tested different deep Q network architectures against the Atari 2600 game 'Gopher'.
-		Base Deep Q network from \cite{dqn2013}\cite{dqn2015} together with Double Q network \cite{doubledqn} and Dueling DQN \cite{duelingdqn} were trained on the environment provided by OpenAI Gym for a total of 2 million frames each. Despite the smaller training time with respect to the original articles, the three network were able to learn the game. They were tested over a 1000 epsiodes scoring respectively a mean reward of 150, 152, 1521.
+		Base Deep Q network from \cite{dqn2013}\cite{dqn2015} together with Double Q network \cite{doubledqn} and Dueling DQN \cite{duelingdqn} were trained on the environment provided by OpenAI Gym each for a total of 2 million frames. Despite the smaller training time with respect to the original articles, the three network were able to learn the game. They were tested over a 1000 epsiodes scoring respectively a mean reward of 150, 152, 1521.
 		
 	\end{abstract}
 	
 	
 	\section{Introduction}
+	 
+	% reinforcement learning
+	In the last few years the reinforcement learning field made great advancement and showed potential in the resolution of difficult problems. Examples of these achievement are given by the development of  neural networks capable of beating Atari 2600 games as shown in \cite{dqn2013} and following works, or by AlphaGO which is an artificial intelligence built from DeepMind that was able to beat the world champion in a complex game like GO. Moreover, reinforcement learning is used in other fields such as robotics, finance and in the medical field.
 	
-	The very important physical effect has applications to astronomy, nuclear physics, condensed matter, and more. 
+	Differently from the supervised approach used for regression and classification or from the unsupervised approach exploited for clustering, in this branch of machine learning the classical situation is of an agent acting on an environment trying to maximize its performance. Formally, at each step the agent observes the current state $s\in\mathcal{S}$, performs an action from a set $\mathcal{A}$ and collect a reward $r\in\mathbb{R}$: the more the cumulative reward is over time the better is the performance. In fact, during training the agent tries to find a policy $\pi:\mathcal{S}\to\mathcal{A}$ that maximizes the value function $v: \mathcal{S}\times\mathcal{A}\to\mathbb{R}$, hence a policy that suggests the best action to take in each possible state. This policy function can be obtained through algorithms like \textit{value iteration}, which estimates first the value function $v$ and then build $\pi$ on top of it, or like \textit{policy iteration} that instead tries to directly compute $\pi$.
 	
-
+	Another common algorithm is \textit{Q-learning}, in which the training estimates a function $Q: \mathcal{S}\times\mathcal{A}\to\mathbb{R}$ that represents how good is to take action $a$ in a state $s$. The correspondent policy function will be constructed as $\pi(s) = argmax_{a}\ Q(s, a)$. The $Q$ function is learned by following an iterative process where at each time $t$ the agent perform an action $a_t$ in the current state $s_t$, collects a reward $r$, observes the new state $s_{t+1}$ and finally update the estimate of $Q$ as follow:
+	\begin{equation}
+		Q(s_t, a_t) = (1-\alpha)\cdot Q(s_t, a_t) + \alpha \cdot (r + \gamma\cdot max_aQ(s_{t+1}, a))
+	\end{equation}
+	in which $\alpha$ is the learning rate and $\gamma$ is the discount factor in the cumulative rewards (\textit{i.e.} how much the future rewards matter).
+	
+	However, all these basic algorithms work if all the possible state-action pairs are visited infinitely often. For this reason they're used together with an $\epsilon$-greedy strategy in order to have a good trade-off between the exploration and the exploitation phases. In the exploration phase the actions are chosen randomly while during the exploitation phase the actions are chosen using the current policy. In a $\epsilon$-greedy strategy the action is taken randomly with a probability $\epsilon$ or it is taken following the policy with $1-\epsilon$ probability. Usually the value of $\epsilon$ varies over time, starting with an high value to encourage exploration in the initial phases and decreasing over time to enforce exploitation.
+	
+	
+	
+	% open ai & Gopher
+	In this work 
+	
+	% hardware
+	All the experimente were executed on a laptop equipped with an Intel i7-6700HQ processor, 16GB of RAM and Nvidia GTX 960m graphics card. The networks were developed using Python and Tensorflow, while the game environment was provided by OpenAI Gym.
 	\section{Deep Reinforcement Learning}
 
-	\subsection{Double Q Learning}
+	\subsection{Double Q network}
 	
 	\subsection{Dueling Q network}
+	
+	\section{Environment}
 	
 	\section{Experiments}
 	
 	\section{Conclusion}
-	
-	%++++++++++++++++++++++++++++++++++++++++
-	% References section will be created automatically 
-	% with inclusion of "thebibliography" environment
-	% as it shown below. See text starting with line
-	% \begin{thebibliography}{99}
-	% Note: with this approach it is YOUR responsibility to put them in order
-	% of appearance.
+
 	
 	\bibliography{bibliography}
 	\bibliographystyle{plain}

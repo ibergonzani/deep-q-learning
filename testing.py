@@ -1,5 +1,6 @@
 import argparse
 import tensorflow as tf
+import numpy as np
 import time
 import gym
 import atari_wrappers
@@ -12,9 +13,12 @@ parser = argparse.ArgumentParser(description='Beating OpenAI envs with Reinforce
 
 parser.add_argument('--environment', dest='env', type=str, default='Alien-ram-v0', help='environment to be used in the simulation', required=True)
 parser.add_argument('--model', dest='model', type=str, help='path of the saved network model', required=True)
-parser.add_argument('--num_games', dest='num_games', type=int, default=10, help='number of games to be played')
+parser.add_argument('--num_games', dest='num_games', type=int, default=1000, help='number of games to be played')
 parser.add_argument('--steps_sleep', dest='steps_sleep', type=int, default=0, help='sleep time between steps')
-parser.add_argument('--network', dest='network', type=str, default='dqn', choices=['dqn', 'doubledqn', 'duelingdqn'], help='Type of network used')
+parser.add_argument('--network', dest='network', type=str, default='dqn', choices=['dqn', 'doubledqn', 'duelingdqn', 'doubleduelingdqn'], help='Type of network used')
+parser.add_argument('--epsilon', dest='epsilon', type=float, default=0.0, help='percentage of random actions in [0.0, 1.0]')
+parser.add_argument('--show', dest='show', action='store_true', help='render the games')
+parser.set_defaults(show=False)
 args = parser.parse_args()
 
 ENVIRONMENT = args.env
@@ -22,6 +26,8 @@ MODEL = args.model
 NUM_GAMES = args.num_games
 NETWORK = args.network
 STEPS_SLEEP = args.steps_sleep
+SHOW_GAME = args.show
+EPSILON = args.epsilon
 
 
 ########## LOAD ENVIRONMENT AND BUILD NETWORK ##########
@@ -53,8 +59,13 @@ with tf.Session() as sess:
 		treward = 0
 		
 		while not endgame:
-			env.render()
-			action = net.takeAction(sess, observation)
+			if SHOW_GAME:
+				env.render()
+			
+			if np.random.uniform() < EPSILON:
+				action = env.action_space.sample()
+			else:
+				action = net.takeAction(sess, observation)
 			observation, reward, endgame, info = env.step(action)
 			treward += reward
 			stats.addReward(reward, endgame)
@@ -62,7 +73,12 @@ with tf.Session() as sess:
 			
 		print('Game', game+1, 'ended. Total Reward:', treward)
 
+		
+print("Saving results")	
 training_rewards = './test/test_rewards.pkl'
 util.PickleSerializer.save(stats, training_rewards)
 
-util.plotGameStats([stats], "test_duelingdqn_1M", episodes_span=25, labels=["dueling dqn"])
+print("Test completed")
+print("Mean score:", np.mean(stats.meanReward()))
+print("Max score:", np.amax(stats.cumulativeReward()))
+util.plotGameStats([stats], "test_duelingdqn_1M", episodes_span=3, labels=["dueling dqn"])
