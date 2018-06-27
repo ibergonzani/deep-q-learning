@@ -1,11 +1,14 @@
 %++++++++++++++++++++++++++++++++++++++++
 % Don't modify this section unless you know what you're doing!
 \documentclass[article,11pt]{article}
+\usepackage[english]{babel}
 \usepackage{tabularx} % extra features for tabular environment
 \usepackage{amsmath}  % improve math presentation
 \usepackage{amssymb}
+\usepackage{algorithm}
+\usepackage{algorithmic}
 \usepackage{graphicx} % takes care of graphic including machinery
-\usepackage[margin=1in,letterpaper]{geometry} % decreases margins
+\usepackage[margin=1.1in,letterpaper]{geometry} % decreases margins
 \usepackage{cite} % takes care of citations
 \usepackage[final]{hyperref} % adds hyper links inside the generated pdf file
 \hypersetup{
@@ -35,34 +38,131 @@
 	\section{Introduction}
 	 
 	% reinforcement learning
-	In the last few years the reinforcement learning field made great advancement and showed potential in the resolution of difficult problems. Examples of these achievement are given by the development of  neural networks capable of beating Atari 2600 games as shown in \cite{dqn2013} and following works, or by AlphaGO which is an artificial intelligence built from DeepMind that was able to beat the world champion in a complex game like GO. Moreover, reinforcement learning is used in other fields such as robotics, finance and in the medical field.
+	In the last few years the reinforcement learning field has made great advancement and showed potential in the resolution of difficult problems. Examples of these achievement are given by the development of  neural networks capable of beating Atari 2600 games as shown in \cite{dqn2013} and following works, or by AlphaGO which is an artificial intelligence built from DeepMind that was able to beat the world champion in a complex game like GO. Moreover, reinforcement learning is used in other fields such as robotics, finance and in the medical field.
 	
 	Differently from the supervised approach used for regression and classification or from the unsupervised approach exploited for clustering, in this branch of machine learning the classical situation is of an agent acting on an environment trying to maximize its performance. Formally, at each step the agent observes the current state $s\in\mathcal{S}$, performs an action from a set $\mathcal{A}$ and collect a reward $r\in\mathbb{R}$: the more the cumulative reward is over time the better is the performance. In fact, during training the agent tries to find a policy $\pi:\mathcal{S}\to\mathcal{A}$ that maximizes the value function $v: \mathcal{S}\times\mathcal{A}\to\mathbb{R}$, hence a policy that suggests the best action to take in each possible state. This policy function can be obtained through algorithms like \textit{value iteration}, which estimates first the value function $v$ and then build $\pi$ on top of it, or like \textit{policy iteration} that instead tries to directly compute $\pi$.
 	
 	Another common algorithm is \textit{Q-learning}, in which the training estimates a function $Q: \mathcal{S}\times\mathcal{A}\to\mathbb{R}$ that represents how good is to take action $a$ in a state $s$. The correspondent policy function will be constructed as $\pi(s) = argmax_{a}\ Q(s, a)$. The $Q$ function is learned by following an iterative process where at each time $t$ the agent perform an action $a_t$ in the current state $s_t$, collects a reward $r$, observes the new state $s_{t+1}$ and finally update the estimate of $Q$ as follow:
 	\begin{equation}
+		\label{eq:qlearning}
 		Q(s_t, a_t) = (1-\alpha)\cdot Q(s_t, a_t) + \alpha \cdot (r + \gamma\cdot max_aQ(s_{t+1}, a))
 	\end{equation}
 	in which $\alpha$ is the learning rate and $\gamma$ is the discount factor in the cumulative rewards (\textit{i.e.} how much the future rewards matter).
 	
 	However, all these basic algorithms work if all the possible state-action pairs are visited infinitely often. For this reason they're used together with an $\epsilon$-greedy strategy in order to have a good trade-off between the exploration and the exploitation phases. In the exploration phase the actions are chosen randomly while during the exploitation phase the actions are chosen using the current policy. In a $\epsilon$-greedy strategy the action is taken randomly with a probability $\epsilon$ or it is taken following the policy with $1-\epsilon$ probability. Usually the value of $\epsilon$ varies over time, starting with an high value to encourage exploration in the initial phases and decreasing over time to enforce exploitation.
 	
+	Recently, Q-learning methods were succesfully used in combination with deep neural networks as firstly shown in \cite{dqn2013}. On top of that different architectures for deep Q-learning were then developed like double DQN\cite{doubledqn} and dueling DQN\cite{duelingdqn}.
 	
+	In this work, these three networks have been tested against \textit{Gopher}, an Atari 2600 game, showing themselves capable of learning the game; all of them are described more in detail in the following section. 
+	Section 3 illustrates the game \textit{Gopher} and the environment used to play it. Finally, in section 4, there are reported the  performed experiments and the obtained results.
 	
-	% open ai & Gopher
-	In this work 
-	
-	% hardware
-	All the experimente were executed on a laptop equipped with an Intel i7-6700HQ processor, 16GB of RAM and Nvidia GTX 960m graphics card. The networks were developed using Python and Tensorflow, while the game environment was provided by OpenAI Gym.
 	\section{Deep Reinforcement Learning}
+	
+	\begin{equation}
+		\label{eq:lossdqn}
+		dsf
+	\end{equation}
+	
+	\begin{algorithm}
+		\caption{Deep Q-learning using experience replay and target network}
+		\label{alg:dqn}
+		\small
+		\begin{algorithmic}
+		\STATE Initialize replay memory $\mathcal{D}$ to capacity $N$
+		\STATE Initialize action-value function $Q$ with random weights $\theta$
+		\STATE Initialize target action-value function $Q'$ with weights $\theta'=\theta$
+		\FOR{$episode = 1, M$}
+		\STATE Initialize sequence $s1 = \{x_1\}$ and preprocessed sequenced $\phi_1 = \phi(s_1)$
+		\FOR{$t = 1, T$}
+		\STATE With probability $\epsilon$ select a random action $a_t$
+		\STATE otherwise select $a_t = max_a Q(\phi(s_t); a; \theta)$
+		\STATE Execute action $a_t$ in emulator and observe reward $r_t$ and image $x_{t+1}$
+		\STATE Set $s_{t+1} = s_t, a_t, x_{t+1}$ and preprocess $\phi_{t+1} = \phi(s_{t+1})$
+		\STATE Store transition $(\phi_t, a_t, r_t, \phi_{t+1})$ in $\mathcal{D}$
+		\STATE Sample random minibatch of transitions $(\phi_j, a_j, r_j, \phi_{j+1})$ from $\mathcal{D}$
+		\STATE Set $y_j =
+		\begin{cases}
+			r_j & \text{for terminal } \phi_{j+1} \\
+			r_j + max_{a'} Q'(\phi_{j+1}, a'; \theta') & \text{for non-terminal } \phi_{j+1}
+		\end{cases}$
+		\STATE Perform a gradient descent step on $(y_j - Q(\phi_j, a_j ; \theta))^2$ according to equation \ref{eq:lossdqn} with respect to weights $\theta$ 
+		\STATE Every $C$ steps update target network $Q'=Q$
+		\ENDFOR
+		\ENDFOR
+		\end{algorithmic}
+	\end{algorithm}
 
 	\subsection{Double Q network}
+	A known problem of q-learning is its leaning to overestimate the action values, especially on stochastic environment. This happens because in the q-learning algorithm, as we can see in equation \ref{eq:qlearning}, the maximum action value is directly used in the estimation of the value function. For this reason it is easier for the algorithm to choose already overestimated action values and then estimate
+	
+	This problem have been discussed by van Hasselt in \cite{doubleq}, where it was proposed the double q-learning algorithm as solution. In double q-learning two different estimators $Q$, $Q'$ are kept and alternately used for their updates as follow:
+	\begin{equation}
+		\label{eq:doubleq}
+		Q(s_t, a_t)=(1-\alpha)\cdot Q(s_t, a_t) + \alpha \cdot (r + \gamma\cdot Q'(s_{t+1}, argmax_aQ(s_{t+1}, a)))
+	\end{equation}
+	This idea was then used in combination with deep q-learning; presented in \cite{doubledqn} from van Hassely et al., the resultant algorithm is called double DQN.
+	
+	Since the original DQN already used a target network, there's no necessity to introduce another network as second estimators. In fact the target network can be used for this purpose even though this isn't exactly equivalent to the double q-learning update. The resultant training algorithm is the same as algorithm \ref{alg:dqn} but with a different updating rule: considering the target network paramaters $\theta'$, at time $t$ the training target $Y_t$ is computed as:
+	\begin{equation}
+		Y_t = r_t - \gamma Q(s_{t+1}, argmax_aQ(s_{t+1}, a; \theta_t);\ \theta'_t)
+	\end{equation}
+	Differently from double q-learning, this update is used only fot the main network, while the target network is uodated every $n$ steps as in the original deep q learning method.
 	
 	\subsection{Dueling Q network}
 	
-	\section{Environment}
+	\begin{equation}
+		\label{eq:dueling}
+	\end{equation}
 	
-	\section{Experiments}
+	\section{Game and Environment}
+	As already said, the game used for the experiments is \textit{Gopher}. In this game the player controls a farmer and has to keep safe three carrots from a gopher. The gopher digs tunnels underground and try to to reach the surface. When this happen, he will eat a carrot and the player will lose a life. In the moment when all of the three carrots are eaten, the player loses the game. In order to avoid this, the player has to cover the holes that are present on the ground; for each covered hole the player's score will increase. Typical situations of the game are presented in image \ref{fig:gopher}.
+	
+	\begin{figure}
+		\includegraphics[width=\textwidth]{images/gopher}
+		\caption{Different in game situations. From left to right: game starting sitution, mole digging underground, mole reaching the soil, mole eating a carrots, farmer covering holes.}
+		\label{fig:gopher}
+	\end{figure}	
+
+	The environment used for the game virtualization is provided by OpenAI Gym and it is called \textit{GopherNoFrameskip-v0}. This environment provides methods for resetting, rendering and making steps in the game. After each step, it returns the current observed state (which is represented by the raw pixels of the game), the obtained reward and a boolean that indicates if the episodes is ended or not\footnote{In this environment an episodes end when a carrot is eaten, hence when the player loses one of the three lifes.}.
+	
+	In order to decreased the number of parameters, the observations are resized from $210\times160$ to $84\times84$ pixel  and the resulting images are converted in greyscale.
+	Since for the majority of the Atari 2600 games it is not always possible to tell the status of the game from a single frame, the state is augmented to contain the last 4 frames. One example is given by Pong, where it is not possible to establish the ball movement from a single frame. This problem does not really affect Gopher but it has been decided to mantain the frame stack so to be consistent with the articles referred in the previous sections.
+	Considering the small changes in the game from one frame to another, each action is repeated 3 times. In this way the network updates itself one time out of three observations, speeding up the training process\footnote{One step in the training algorithm would perform three steps in the game.}.
+	Finally, as explained in \cite{dqn2013}, the rewards are clipped between 1 and -1 using their sign. This is useful to limit the scale of the error derivatives in case of high rewards. On the other hand the learning could be negatively affected because there are no more differences between rewards of different magnitude.
+	
+	
+	\section{Networks Architectures and Experiments}
+	The experiments on \textit{Gopher} consist in a comparison between a deep q-network, a double DQN and a dueling DQN. The structures of the trained DQN and double DQN consist in an input layer $(84\times84\times4)$ followed by 3 convolutional layers. The first layer has 32 filters of size $(8\times8)$ with strides 4 on each axis. The second layer has 64 filters of size $(4\times4)$ with strides 2. The last convolutional layer has 64 filters  of size $(3\times3)$ with strides 1. After the convolutional layers there are a fully connected layer with 512 output units and another fully connected layer with an output unit for each possible action in the game. Except for the input and output layer, after each layer there is a ReLU activation function.
+	
+	The dueling DQN presents the same architecture for the input layer and the convolutional layers. After the last convolutional layer the flow is divided in two stream: the advantage stream and the value stream. Both of them start with a fully connected layer with 512 output units. The advantage stream continues with a FC layer with an output unit for each action, while the value stream ends with a FC with 1 output unit. These two layers are then combined together as described by equation \ref{eq:dueling}. Similarly to the previous case, the layers are separated by a rectifier non-linearity.
+	For all the networks it was used the RMSProp optimizer with a learning rate of 0.00025 and a momentum of 0.95.
+	
+	All the experiments were executed on a laptop equipped with an Intel i7-6700HQ processor, 16GB of RAM and Nvidia GTX 960m graphics card. The networks were developed using Python and Tensorflow.
+	
+	\begin{figure}
+		\includegraphics[width=\textwidth]{images/gopher}
+		\label{fig:average_reward}
+		\caption{Average rewards collected over 25 episodes during the training of DQN, double DQN, dueling DQN.}
+	\end{figure}
+	
+	After the training phase, the networks have been tested on a series of 1000 games, weher a game consists in the set of episodes that leads from the starting situation, hence 3 carrots, to the final game situation with zero carrots. The number of episodes can be variable because of the possibility for the farmer to plant new seeds.
+	The obtained results are reported in the table \ref{tab:test}.
+	\begin{table}
+		\centering
+		\begin{tabular}{|c|c|c|}
+			\hline
+			Agent	& Mean score & Max score\\
+			\hline
+			Random & & \\
+			DQN & & \\
+			Double DQN & & \\
+			Dueling DQN & & \\
+			\hline
+		\end{tabular}
+		\caption{Comparison among the different q-networks}
+		\label{tab:test}
+	\end{table}
+
 	
 	\section{Conclusion}
 
