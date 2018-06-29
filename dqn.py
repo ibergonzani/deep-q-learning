@@ -111,8 +111,9 @@ class DuelingDQN(DQN):
 		# value stream
 		advantage = tf.layers.dense(inputs=fc1a, units=num_actions, activation=tf.nn.relu)
 		value = tf.layers.dense(inputs=fc1v, units=1, activation=tf.nn.relu)
-		output = tf.reshape(value, [-1, 1]) + (advantage - tf.reduce_mean(advantage, axis=1, keep_dims=True))
-		
+		#output = tf.reshape(value, [-1, 1]) + (advantage - tf.reduce_mean(advantage, axis=1, keep_dims=True))
+		#output = value + tf.subtract(advantage, tf.reduce_mean(advantage, axis=1, keep_dims=True))
+		output = value + (advantage - tf.reduce_mean(advantage, axis=1, keep_dims=True))
 		return output
 		
 		
@@ -123,7 +124,7 @@ def get_network(type, **kargs):
 	net = None
 	if type == 'dqn' or type == 'doubledqn':
 		net = DQN(**kargs)
-	elif type == 'duelingdqn' in type:	
+	elif 'duelingdqn' in type:	
 		net = DuelingDQN(**kargs)
 	
 	return net

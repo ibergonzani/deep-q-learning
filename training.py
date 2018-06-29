@@ -16,7 +16,7 @@ class TrainingInfo():
 	def __init__(self, experience_replay_size=100000):
 		
 		# buffer containing past transitions used for training
-		self.experience_replay = util.MultipleRoundBuffer(number_of_buffers=5, capacity=experience_replay_size)
+		self.experience_replay = util.ExperienceReplay(capacity=experience_replay_size)
 		
 		# game statistics: #ìnumber of episodes, rewards...
 		self.game_stats = util.GameStats()
@@ -86,7 +86,7 @@ if __name__ == "__main__":
 	optimizer = tf.train.RMSPropOptimizer(learning_rate=0.00025, momentum=0.95, epsilon=0.01)
 	
 	#optimizer = tf.train.AdamOptimizer(learning_rate=1e-4)
-	use_target_network = False if NETWORK.startswith('double') else True
+	use_target_network = True #False if NETWORK.startswith('double') else True
 	use_double_dqn = True if NETWORK.startswith('double') else False
 	
 	net = dqn.get_network(type=NETWORK, input_shape=env.observation_space.shape, num_actions=env.action_space.n,

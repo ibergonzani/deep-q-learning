@@ -36,13 +36,10 @@ class JSONSerializer():
 			obj.__dict__[key] = value
 
 
-# Buffer with a defined capacity that can be preallocated using a default value or .
-# If the buffer is saturated, adding an element will delete a stored value following a FIFO arrengement.
-# There isn't any check on the access.
-# In case of a not fully allocated buffer be sure to access over the current the inserted elements.
-class MultipleRoundBuffer():
+
+class ExperienceReplay():
 	
-	def __init__(self, number_of_buffers=1, capacity=100):
+	def __init__(self, capacity=100, number_of_buffers=5):
 		assert number_of_buffers > 0
 		assert capacity > 0
 		
@@ -103,9 +100,9 @@ class GameStats():
 		return sum(self.games_rewards[-1])
 		
 	def meanReward(self):
-		return np.mean(np.array(self.games_rewards), axis=1)
+		return np.mean(np.array(self.cumulativeRewards()))
 	
-	def cumulativeReward(self):
+	def cumulativeRewards(self):
 		return [sum(self.games_rewards[i]) for i in range(len(self.games_rewards))]
 	
 	def stepsPerGame(self):
@@ -113,15 +110,17 @@ class GameStats():
 		
 		
 		
+colors = ["#FF0000","#00FF00","#0000FF","#000000"]
 		
 def plotGameStats(game_stats, path, episodes_span=25, labels=None, colours=None, show=False):
 	
 	fig1, ax1 = plt.subplots()
+	plt.locator_params(axis='x', nbins=5)
 	
 	for n, gs in enumerate(game_stats):
 		missing_episodes = episodes_span - (gs.totalGames() % episodes_span)
 		
-		rewards = gs.cumulativeReward() + [0] * missing_episodes
+		rewards = gs.cumulativeRewards() + [0] * missing_episodes
 		rewards = np.reshape(rewards, [-1, episodes_span])[:-1] #last games is not considered because of padding
 		mean_span_rewards = np.mean(rewards, axis=1)
 		
@@ -132,9 +131,9 @@ def plotGameStats(game_stats, path, episodes_span=25, labels=None, colours=None,
 		
 		label = labels[n] if labels != None else ""
 		colour = colours[n] if colours != None else "#0F0F0F"
-		ax1.plot(span_steps, mean_span_rewards, label=label, color=colour, linewidth=2-(n))
+		ax1.plot(span_steps, mean_span_rewards, label=label, color=colour, linewidth=2)
 		
-	ax1.set(xlabel='frames', ylabel='reward (clipped)', title='Mean rewards over {:d} episodes'.format(episodes_span))
+	ax1.set(xlabel='frames', ylabel='reward (clipped)', title='Average rewards over {:d} episodes'.format(episodes_span))
 	ax1.grid()
 	if labels != None:
 		ax1.legend()

@@ -66,7 +66,8 @@ with tf.Session() as sess:
 				action = env.action_space.sample()
 			else:
 				action = net.takeAction(sess, observation)
-			observation, reward, endgame, info = env.step(action)
+			observation, reward, endepisode, info = env.step(action)
+			endgame = info['ale.lives'] == 0
 			treward += reward
 			stats.addReward(reward, endgame)
 			#time.sleep(STEPS_SLEEP)
@@ -79,6 +80,6 @@ training_rewards = './test/test_rewards.pkl'
 util.PickleSerializer.save(stats, training_rewards)
 
 print("Test completed")
-print("Mean score:", np.mean(stats.meanReward()))
-print("Max score:", np.amax(stats.cumulativeReward()))
-util.plotGameStats([stats], "test_duelingdqn_1M", episodes_span=3, labels=["dueling dqn"])
+print("Mean score:", stats.meanReward(),"+-", np.std(stats.cumulativeRewards()))
+print("Max score:", np.amax(stats.cumulativeRewards()))
+util.plotGameStats([stats], "test_dqn", episodes_span=10, labels=["dueling dqn"])

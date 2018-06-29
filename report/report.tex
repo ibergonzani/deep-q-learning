@@ -7,6 +7,7 @@
 \usepackage{amssymb}
 \usepackage{algorithm}
 \usepackage{algorithmic}
+%\usepackage{minipage}
 \usepackage{graphicx} % takes care of graphic including machinery
 \usepackage[margin=1.1in,letterpaper]{geometry} % decreases margins
 \usepackage{cite} % takes care of citations
@@ -58,6 +59,17 @@
 	
 	\section{Deep Reinforcement Learning}
 	
+	
+	%experience replay
+	A useful technique used in the training phase is given by the used of an experience replay buffer. The observed state transitions  are continuely saved inside a buffer as (state, action, reward, next state, endgame) tuples. At each training step, a minibatch of transitions is sampled from the buffer and used to update the network.
+	\begin{equation}
+		\label{dqn_update}
+	\end{equation}
+	Since the minibatch are randomly sampled, learning will not suffer the correlation related to consecutive transitions.
+	
+	%target network
+	With the aim to increase the stability of the learning algorithm, it has been used for the training a second network, referenced as \textit{target} network \cite{dqn2015}. At each update the target network is used to evaluate the target term $y_j$ and every $C$ steps it is updated by cloning the main network. By using only one network, un update that increase the state-action value $Q(s_t, a_t)$ will increase also $Q(s_{t+1, a})$ for all the actions $a$ and consequently the target term $y_j$ will be increased as well. This behaviour could bring to undesidered oscillation in the policy estimate.  With the support of a target network, an increase of $Q(s_t, a_t)$ doesn't influence immediately the target value $y_j$, reducing the undesired oscillations.
+	
 	\begin{equation}
 		\label{eq:lossdqn}
 		dsf
@@ -85,7 +97,7 @@
 			r_j & \text{for terminal } \phi_{j+1} \\
 			r_j + max_{a'} Q'(\phi_{j+1}, a'; \theta') & \text{for non-terminal } \phi_{j+1}
 		\end{cases}$
-		\STATE Perform a gradient descent step on $(y_j - Q(\phi_j, a_j ; \theta))^2$ according to equation \ref{eq:lossdqn} with respect to weights $\theta$ 
+		\STATE Perform a gradient descent step on $L(y_j - Q(\phi_j, a_j ; \theta))$ according to equation \ref{eq:lossdqn} with respect to weights $\theta$ 
 		\STATE Every $C$ steps update target network $Q'=Q$
 		\ENDFOR
 		\ENDFOR
@@ -93,7 +105,7 @@
 	\end{algorithm}
 
 	\subsection{Double Q network}
-	A known problem of q-learning is its leaning to overestimate the action values, especially on stochastic environment. This happens because in the q-learning algorithm, as we can see in equation \ref{eq:qlearning}, the maximum action value is directly used in the estimation of the value function. For this reason it is easier for the algorithm to choose already overestimated action values and then estimate
+	A known problem of q-learning is its leaning to overestimate the action values, especially on stochastic environment. This happens because in the q-learning algorithm, as we can see in equation \ref{eq:qlearning}, the maximum action value is directly used in the estimation of the value function. For this reason it is easier for the algorithm to choose already overestimated action values and then continue to wrongly increase their estimate.
 	
 	This problem have been discussed by van Hasselt in \cite{doubleq}, where it was proposed the double q-learning algorithm as solution. In double q-learning two different estimators $Q$, $Q'$ are kept and alternately used for their updates as follow:
 	\begin{equation}
@@ -102,17 +114,44 @@
 	\end{equation}
 	This idea was then used in combination with deep q-learning; presented in \cite{doubledqn} from van Hassely et al., the resultant algorithm is called double DQN.
 	
-	Since the original DQN already used a target network, there's no necessity to introduce another network as second estimators. In fact the target network can be used for this purpose even though this isn't exactly equivalent to the double q-learning update. The resultant training algorithm is the same as algorithm \ref{alg:dqn} but with a different updating rule: considering the target network paramaters $\theta'$, at time $t$ the training target $Y_t$ is computed as:
+	Since the original DQN already used a target network, there's no necessity to introduce another network as second estimators. In fact the target network can be used for this purpose even though this isn't exactly equivalent to the double q-learning update. The resultant training algorithm is the same as algorithm \ref{alg:dqn} but with a different updating rule: considering the target network paramaters $\theta'$, at time $t$ the training target $y_t$ is computed as:
 	\begin{equation}
-		Y_t = r_t - \gamma Q(s_{t+1}, argmax_aQ(s_{t+1}, a; \theta_t);\ \theta'_t)
+		y_t = r_t - \gamma Q(s_{t+1}, argmax_aQ(s_{t+1}, a; \theta_t);\ \theta'_t)
 	\end{equation}
 	Differently from double q-learning, this update is used only fot the main network, while the target network is uodated every $n$ steps as in the original deep q learning method.
 	
 	\subsection{Dueling Q network}
+	In some environments it is possible to encounter states where not all the actions are necessary to estimate the value function for the state itself. An example of that is given by the Atari game \textit{Enduro}, in which moving left or right is only useful when a collision is eminent.
 	
+	In Wang et al. \cite{duelingdqn} it has been proposed a network architecture that handles this situation by creating two different estimators: the value estimator $V$ and the advantage estimators $A$. The advantage estimator $A(s,a;\theta,\alpha)$ gives an estimate of the goodness of a particular action $a$ in a state $s$. On the other hand the value estimator $V(s,\theta,\beta)$ measures how good is to be in a given state $s$.
+	
+	More in detail, for an agent that operates in accordance to a policy $\pi$ the values of the state-action pair $(s,a)$ and the states $s$ are described by:
+	\begin{equation}
+		Q^\pi(s,a) = \mathbb{E}\left[R_t | s_t = s, a_t = a, \pi \right]
+	\end{equation}
+	\begin{equation}
+		V^\pi(s) = \mathbb{E}_{a\sim \pi(s)} \left[ Q^\pi(s,a)\right]
+	\end{equation}
+	Using the value function $V$ and the state-action function $Q$, then the advantage function is defined as:
+	\begin{equation}
+		A^\pi(s,a) = Q^\pi(s,a) - V^\pi(s)
+	\end{equation}
+	
+	As shown in figure \ref{fig:dueling}, the advantage function and the value function are implemented in the network architecture as two different branches parametrized respectively from the weights $\alpha$, $\beta$.
+	\begin{figure}
+		\centering
+		\includegraphics[width=0.9\textwidth]{images/dueling}
+		\caption{On the left a standard DQN architecture, on the right the dueling deep Q network architecture with the value and advantage streams. }
+		\label{fig:dueling}
+	\end{figure}
+	These branches originate from the same subnetwork parametrized by $\theta$.	Finally, considering the set of apossible actions $\mathcal{A}$, the network output is given by the combination of the value stream $V$ and the advantage stream $A$ as described by the next equation:
 	\begin{equation}
 		\label{eq:dueling}
+		Q(s, a; \theta, \alpha, \beta) = V(s,;\theta, \beta) + \left( A(s,a;\theta,\alpha) - \dfrac{1}{|\mathcal{A}|} \sum_{a'}^{} A(s, a'; \theta,\alpha) \right)
 	\end{equation}
+	Using the dueling architecture, the network improve its ability to learn the state value function $V$. The reason behind this behaviour is that the value stream is always updated during each update of the network. Instead in the original architecture only the value related to one action is updated. The dueling architecture has proven to improve more the performances with a larger number of actions, outclassing the original single stream architecture.
+	
+	Since the dueling Q network consists in just a change of the network architecture, it can be directly used with the existing learning algorithm, like for example double Q learning and SARSA, or with the ones that will be developed in the future.
 	
 	\section{Game and Environment}
 	As already said, the game used for the experiments is \textit{Gopher}. In this game the player controls a farmer and has to keep safe three carrots from a gopher. The gopher digs tunnels underground and try to to reach the surface. When this happen, he will eat a carrot and the player will lose a life. In the moment when all of the three carrots are eaten, the player loses the game. In order to avoid this, the player has to cover the holes that are present on the ground; for each covered hole the player's score will increase. Typical situations of the game are presented in image \ref{fig:gopher}.
@@ -125,27 +164,51 @@
 
 	The environment used for the game virtualization is provided by OpenAI Gym and it is called \textit{GopherNoFrameskip-v0}. This environment provides methods for resetting, rendering and making steps in the game. After each step, it returns the current observed state (which is represented by the raw pixels of the game), the obtained reward and a boolean that indicates if the episodes is ended or not\footnote{In this environment an episodes end when a carrot is eaten, hence when the player loses one of the three lifes.}.
 	
-	In order to decreased the number of parameters, the observations are resized from $210\times160$ to $84\times84$ pixel  and the resulting images are converted in greyscale.
+	In order to decreased the number of parameters, the observations are resized from $210\times160$ to $84\times84$ pixel, the resulting images are converted in greyscale and at the end scaled between 0 and 1.
 	Since for the majority of the Atari 2600 games it is not always possible to tell the status of the game from a single frame, the state is augmented to contain the last 4 frames. One example is given by Pong, where it is not possible to establish the ball movement from a single frame. This problem does not really affect Gopher but it has been decided to mantain the frame stack so to be consistent with the articles referred in the previous sections.
 	Considering the small changes in the game from one frame to another, each action is repeated 3 times. In this way the network updates itself one time out of three observations, speeding up the training process\footnote{One step in the training algorithm would perform three steps in the game.}.
 	Finally, as explained in \cite{dqn2013}, the rewards are clipped between 1 and -1 using their sign. This is useful to limit the scale of the error derivatives in case of high rewards. On the other hand the learning could be negatively affected because there are no more differences between rewards of different magnitude.
 	
 	
 	\section{Networks Architectures and Experiments}
-	The experiments on \textit{Gopher} consist in a comparison between a deep q-network, a double DQN and a dueling DQN. The structures of the trained DQN and double DQN consist in an input layer $(84\times84\times4)$ followed by 3 convolutional layers. The first layer has 32 filters of size $(8\times8)$ with strides 4 on each axis. The second layer has 64 filters of size $(4\times4)$ with strides 2. The last convolutional layer has 64 filters  of size $(3\times3)$ with strides 1. After the convolutional layers there are a fully connected layer with 512 output units and another fully connected layer with an output unit for each possible action in the game. Except for the input and output layer, after each layer there is a ReLU activation function.
+	The experiments on \textit{Gopher} consist in a comparison between a deep q-network, a double DQN and a dueling DQN which also uses the double deep q-learning algorithm. The structures of the trained DQN and double DQN consist in an input layer $(84\times84\times4)$ followed by 3 convolutional layers. The first layer has 32 filters of size $(8\times8)$ with strides 4 on each axis. The second layer has 64 filters of size $(4\times4)$ with strides 2. The last convolutional layer has 64 filters  of size $(3\times3)$ with strides 1. After the convolutional layers there are a fully connected layer with 512 output units and another fully connected layer with an output unit for each possible action in the game. Except for the input and output layer, after each layer there is a ReLU activation function.
 	
 	The dueling DQN presents the same architecture for the input layer and the convolutional layers. After the last convolutional layer the flow is divided in two stream: the advantage stream and the value stream. Both of them start with a fully connected layer with 512 output units. The advantage stream continues with a FC layer with an output unit for each action, while the value stream ends with a FC with 1 output unit. These two layers are then combined together as described by equation \ref{eq:dueling}. Similarly to the previous case, the layers are separated by a rectifier non-linearity.
+	As suggested in Mnih et al. (2015, Nature), in order to improve the stability of the algorithm,  the error term in the update is clipped between -1 and 1. This is achieved by using the Huber Loss as loss function\footnote{Or the equivalent error term of the double q network algorithm.}:
+	\begin{equation}
+		L_i(\theta_i) = \mathbb{E}_{s,a,r,s'\sim U(\mathcal{D})} \left[L_\delta \left( r + \gamma\cdot max_{a'}Q(s',a'; \theta'_i) - Q(s,a;\theta_i) \right) \right]
+	\end{equation}
+	\begin{equation}
+		L_{\delta}(a)  = 
+		\begin{cases}
+			\dfrac{1}{2}a^2 & \text{if $|a| \leq 1$}\\
+			\delta|x-y| - \dfrac{1}{2}\delta & \text{otherwise}
+		\end{cases}
+	\end{equation}
 	For all the networks it was used the RMSProp optimizer with a learning rate of 0.00025 and a momentum of 0.95.
+	
+	The training consisted in a sequence of 2 million steps for each network, using random action in the first 50000 steps in order to populate the experience replay buffer, which had a total capacity of 100000 transitions. In order to have a good space exloration, the training used an $\epsilon$-greedy strategy with a decreasing $\epsilon$ from 1.0 to 0.1 in the first million steps. For the remaining part of the training the $\epsilon$ was constant at 0.1 so to mantain a little exploration. After the first 50000 steps, the network is updated after each action using a minibatch of 32 transitions uniformely sampled from the experience replay buffer. The target network is updated every 10000 steps.
 	
 	All the experiments were executed on a laptop equipped with an Intel i7-6700HQ processor, 16GB of RAM and Nvidia GTX 960m graphics card. The networks were developed using Python and Tensorflow.
 	
 	\begin{figure}
-		\includegraphics[width=\textwidth]{images/gopher}
+		\minipage{0.32\textwidth}
+		\includegraphics[width=\linewidth]{images/dqn_training_rewards}
+		%\caption{A really Awesome Image}\label{fig:awesome_image1}
+		\endminipage\hfill
+		\minipage{0.32\textwidth}
+		\includegraphics[width=\linewidth]{images/double_training_rewards}
+		%\caption{A really Awesome Image}\label{fig:awesome_image2}
+		\endminipage\hfill
+		\minipage{0.32\textwidth}%
+		\includegraphics[width=\linewidth]{images/dqn_training_rewards}
+		%\caption{A really Awesome Image}\label{fig:awesome_image3}
+		\endminipage
 		\label{fig:average_reward}
-		\caption{Average rewards collected over 25 episodes during the training of DQN, double DQN, dueling DQN.}
+		\caption{Average rewards collected over 25 episodes during the training of DQN, double DQN and dueling DDQN.}
 	\end{figure}
-	
-	After the training phase, the networks have been tested on a series of 1000 games, weher a game consists in the set of episodes that leads from the starting situation, hence 3 carrots, to the final game situation with zero carrots. The number of episodes can be variable because of the possibility for the farmer to plant new seeds.
+	As shown
+	After the training phase, the networks have been tested on a series of 1000 games, wher a game consists in the set of episodes that leads from the starting situation, hence 3 carrots, to the final game situation with zero carrots. The number of episodes can be variable because of the possibility for the farmer to plant new seeds. During the test it has been used a fixed $\epsilon$-greedy value of 0.05.
 	The obtained results are reported in the table \ref{tab:test}.
 	\begin{table}
 		\centering
@@ -153,19 +216,21 @@
 			\hline
 			Agent	& Mean score & Max score\\
 			\hline
-			Random & & \\
-			DQN & & \\
-			Double DQN & & \\
-			Dueling DQN & & \\
+			Random & $289.38 \pm 237.7$ & 1500 \\
+			DQN & $1283.02 \pm 718$ & 6400\\
+			Double DQN & $1288.4 \pm 722.4$ & 6380 \\
+			Dueling DDQN & & \\
 			\hline
 		\end{tabular}
-		\caption{Comparison among the different q-networks}
+		\caption{Comparison among the different q-networks, tested on 1000 games.}
 		\label{tab:test}
 	\end{table}
 
+	From the results it is clear that all the networks learned the basics of the game, performing well above a random agent. Still the obtained scores are not close to the ones reported in \cite{combined_dqn}, even though the models are not really comparable due to the limited training for the networks described in this work. Moreover the dueling architecture performed badly, even worse than the standard DQN architecture; it is possible that the poor performance could be related to a bad seed for the initial network weights.
 	
 	\section{Conclusion}
-
+	In this project it has been possible to study different learning algorithms and network architectures related to deep reinforcement learning. The developed models have been tested against the Atari 2600 game \textit{Gopher}, showing their capabilities at learning the game dynamics, despite not reaching the scores obtained in the referenced papers. The reason is attributable to the smaller training time. Anyway, all of the trained models has shown to play way better than a random agent.
+	On top of that, it has already shown that is possible to learn better policies by using prioritized experience replay \cite{prioritized} in the learning algorithm. This mechanism gives a different weight to the transitions stored in the experience replay buffer based on their temporal error. By prioritizing the examples in this way, the more significative ones has a greater probability of being chosen, leading to a better learning.
 	
 	\bibliography{bibliography}
 	\bibliographystyle{plain}
