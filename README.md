@@ -8,7 +8,7 @@ The usable environments are from OpenAi Gym. For installing gym look at https://
 
 ##  Train a network
 
-Networks training is performed using the train.py module. It requires as parameter the gym environment to be learned. Optionally it is possible to specify the type of network and learning algorithm to be used among "dqn", ""doubledqn, "duelingdqn", "doubleduelingdqn" (default is "dqn"). Training can restart from a checkpoint using the --checkpoint argument to provide the network weights and --training_info argument to provide the training status (es. current step, total steps, experience replay buffer data). By using --checkpoint_step it is possible to specify after how many steps a checkpoint is saved.
+Networks training is performed using the train.py module. It requires as parameter the gym environment to be learned. Optionally it is possible to specify the type of network and learning algorithm to be used. Training can restart from a checkpoint using the --checkpoint argument to provide the network weights and --training_info argument to provide the training status (es. current step, total steps, experience replay buffer data). By using --checkpoint_step it is possible to specify after how many steps a checkpoint is saved.
 
 ```
 >python train.py --environment PongNoFrameskip-v0 --network doubledqn --checkpoint path/to/weights --training_info path/to/training_info

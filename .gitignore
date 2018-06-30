@@ -4,6 +4,3 @@ video/
 *.png
 __pycache__/
 report/*
-!report/report.tex
-!report/bibliography.bib
-!report/report.pdf
