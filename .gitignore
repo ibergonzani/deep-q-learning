@@ -1,6 +1,4 @@
 model*/
 test/
-video/
 *.png
 __pycache__/
-report/*
