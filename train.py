@@ -164,4 +164,4 @@ if __name__ == "__main__":
 		training_rewards = MODEL_FOLDER + 'training_rewards.pkl'
 		util.PickleSerializer.save(trn.game_stats, training_rewards)
 		
-		util.plotGameStats([trn.game_stats], "duelingdqn_1M", episodes_span=25, labels=["dueling dqn"])
+		util.plotGameStats([trn.game_stats], NETWORK, episodes_span=25, labels=[NETWORK])

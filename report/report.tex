@@ -9,7 +9,7 @@
 \usepackage{algorithmic}
 %\usepackage{minipage}
 \usepackage{graphicx} % takes care of graphic including machinery
-\usepackage[margin=1.1in,letterpaper]{geometry} % decreases margins
+\usepackage[margin=1.5in,letterpaper]{geometry} % decreases margins
 \usepackage{cite} % takes care of citations
 \usepackage[final]{hyperref} % adds hyper links inside the generated pdf file
 \hypersetup{
@@ -46,34 +46,57 @@
 	Another common algorithm is \textit{Q-learning}, in which the training estimates a function $Q: \mathcal{S}\times\mathcal{A}\to\mathbb{R}$ that represents how good is to take action $a$ in a state $s$. The correspondent policy function will be constructed as $\pi(s) = argmax_{a}\ Q(s, a)$. The $Q$ function is learned by following an iterative process where at each time $t$ the agent perform an action $a_t$ in the current state $s_t$, collects a reward $r$, observes the new state $s_{t+1}$ and finally update the estimate of $Q$ as follow:
 	\begin{equation}
 		\label{eq:qlearning}
-		Q(s_t, a_t) = (1-\alpha)\cdot Q(s_t, a_t) + \alpha \cdot (r + \gamma\cdot max_aQ(s_{t+1}, a))
+		Q(s_t, a_t) = (1-\alpha)\cdot Q(s_t, a_t) + \alpha \cdot (r + \gamma\cdot \text{max}_aQ(s_{t+1}, a))
 	\end{equation}
 	in which $\alpha$ is the learning rate and $\gamma$ is the discount factor in the cumulative rewards (\textit{i.e.} how much the future rewards matter).
 	
 	However, all these basic algorithms work if all the possible state-action pairs are visited infinitely often. For this reason they're used together with an $\epsilon$-greedy strategy in order to have a good trade-off between the exploration and the exploitation phases. In the exploration phase the actions are chosen randomly while during the exploitation phase the actions are chosen using the current policy. In a $\epsilon$-greedy strategy the action is taken randomly with a probability $\epsilon$ or it is taken following the policy with $1-\epsilon$ probability. Usually the value of $\epsilon$ varies over time, starting with an high value to encourage exploration in the initial phases and decreasing over time to enforce exploitation.
 	
-	Recently, Q-learning methods were succesfully used in combination with deep neural networks as firstly shown in \cite{dqn2013}. On top of that different architectures for deep Q-learning were then developed like double DQN\cite{doubledqn} and dueling DQN\cite{duelingdqn}.
+	Recently, Q-learning methods were succesfully used in combination with deep neural networks as firstly shown in \cite{dqn2013}. On top of that different learning algorithm and architectures for deep Q-learning were then developed like double DQN\cite{doubledqn} and dueling DQN\cite{duelingdqn}.
 	
 	In this work, these three networks have been tested against \textit{Gopher}, an Atari 2600 game, showing themselves capable of learning the game; all of them are described more in detail in the following section. 
 	Section 3 illustrates the game \textit{Gopher} and the environment used to play it. Finally, in section 4, there are reported the  performed experiments and the obtained results.
 	
 	\section{Deep Reinforcement Learning}
+	As already said, the agent tries to select action in order to maximize its performance, hence trying to maximize at time $t$ the cumulative discounted reward $R_t = \sum_{t'=t}^{T}\gamma^{t'-t}r_{t'}$, where $T$ represents the end game timestep. Then, the training objective is to estimate the optimal state-action value function $Q^*(s,a) =\text{max}_\pi \mathbb{E}\left[R_t | s_t=s, a_t=a, \pi\right]$ which is subject to the Bellman equation property and can be rewritten as:
+	\begin{equation}
+		Q^*(s,a) = \mathbb{E}_{s'\sim\varepsilon}\left[r + \gamma \text{max}_{a}Q^*(s',a')\right | s, a]
+	\end{equation} 
+	The optimal state-action valur function $Q^*$ reflect the optimal policy $\pi^*$ and in theory can be estimated using the algorithm mentioned in the previous section. In practice this coul be really impractical for difficult problems.
+	As presented in \cite{dqn2013}, it is possible to approximate $Q^*$ using a neural network: paramatrized by the weights $\theta$, this type of network is referred as Q-network.
 	
+	Like classical neural network, a Q-network is trained by minimizing a loss function $L_i(\theta_i)$ but this change at each iteration $i$. Considering for example a L2 loss, the equation is
+	\begin{equation}
+		L_i(\theta_i) = \mathbb{E}_{s,a\sim\rho(\cdot)} \left[ (y_i - Q(s,a;\theta_i))^2 \right]
+		\label{lossdqn}
+	\end{equation}
+	in which $y_i=\mathbb{E}_{s'\sim\varepsilon} \left[ r+ \gamma \text{max}_{a'}Q(s',a';\theta_{i-1})|s,a \right]$ is the update target.
+	At each step the loss $L_i$ can be minimized with the standard stochastic gradient descent algorithm. Notice that, unlike the supervised learnig situation, also the target $y_i$ depends on the network weights $\theta_i$. By differentiating with respect the network weights, the correct loss gradient is
+	\begin{equation}
+		\nabla_{\theta_i} L_i(\theta_i) = \mathbb{E}_{s,a\sim\rho(\cdot);s'\sim\varepsilon} \left[ \left( r+\gamma \text{max}_{a'}Q(s',a';\theta_{i-1}) - Q(s,a;\theta_i) \right) \nabla_{\theta_i} Q(s,a;\theta_i) \right]
+	\end{equation}
+	Updating the weights at every step and using a single sample as expectation, the obtained algorithm corresponds to the classical Q-learning algorithm.\\
 	
 	%experience replay
-	A useful technique used in the training phase is given by the used of an experience replay buffer. The observed state transitions  are continuely saved inside a buffer as (state, action, reward, next state, endgame) tuples. At each training step, a minibatch of transitions is sampled from the buffer and used to update the network.
-	\begin{equation}
-		\label{dqn_update}
-	\end{equation}
-	Since the minibatch are randomly sampled, learning will not suffer the correlation related to consecutive transitions.
+	A useful technique used in the training phase is given by the used of an experience replay buffer. The observed state transitions  are continuely saved inside a buffer as (state, action, reward, next state, endgame) tuples. At each training step, a minibatch of transitions is sampled from the buffer and used to update the network.Since the minibatch are randomly sampled, learning will not suffer the correlation related to consecutive transitions.
 	
 	%target network
 	With the aim to increase the stability of the learning algorithm, it has been used for the training a second network, referenced as \textit{target} network \cite{dqn2015}. At each update the target network is used to evaluate the target term $y_j$ and every $C$ steps it is updated by cloning the main network. By using only one network, un update that increase the state-action value $Q(s_t, a_t)$ will increase also $Q(s_{t+1, a})$ for all the actions $a$ and consequently the target term $y_j$ will be increased as well. This behaviour could bring to undesidered oscillation in the policy estimate.  With the support of a target network, an increase of $Q(s_t, a_t)$ doesn't influence immediately the target value $y_j$, reducing the undesired oscillations.
 	
+	%huber loss
+	As suggested in Mnih et al. (2015, Nature), to further improve the stability of the algorithm,  the error term in the update should be clipped between -1 and 1. This is achieved by using the Huber Loss instead of equation \ref{lossdqn}:
 	\begin{equation}
-		\label{eq:lossdqn}
-		dsf
+	L_i(\theta_i) = \mathbb{E}_{s,a,r,s'\sim U(\mathcal{D})} \left[L_\delta \left( r + \gamma\cdot max_{a'}Q(s',a'; \theta'_i) - Q(s,a;\theta_i) \right) \right]
 	\end{equation}
+	\begin{equation}
+	L_{\delta}(a)  = 
+	\begin{cases}
+	\dfrac{1}{2}a^2 & \text{if $|a| \leq 1$}\\
+	\delta|x-y| - \dfrac{1}{2}\delta & \text{otherwise}
+	\end{cases}
+	\end{equation}
+	
+	Obtained by combining the concepts described above, the final learning method for DQN is listed in algorithm \ref{alg:dqn}.
 	
 	\begin{algorithm}
 		\caption{Deep Q-learning using experience replay and target network}
@@ -87,7 +110,7 @@
 		\STATE Initialize sequence $s1 = \{x_1\}$ and preprocessed sequenced $\phi_1 = \phi(s_1)$
 		\FOR{$t = 1, T$}
 		\STATE With probability $\epsilon$ select a random action $a_t$
-		\STATE otherwise select $a_t = max_a Q(\phi(s_t); a; \theta)$
+		\STATE otherwise select $a_t = \text{max}_a Q(\phi(s_t); a; \theta)$
 		\STATE Execute action $a_t$ in emulator and observe reward $r_t$ and image $x_{t+1}$
 		\STATE Set $s_{t+1} = s_t, a_t, x_{t+1}$ and preprocess $\phi_{t+1} = \phi(s_{t+1})$
 		\STATE Store transition $(\phi_t, a_t, r_t, \phi_{t+1})$ in $\mathcal{D}$
@@ -97,7 +120,7 @@
 			r_j & \text{for terminal } \phi_{j+1} \\
 			r_j + max_{a'} Q'(\phi_{j+1}, a'; \theta') & \text{for non-terminal } \phi_{j+1}
 		\end{cases}$
-		\STATE Perform a gradient descent step on $L(y_j - Q(\phi_j, a_j ; \theta))$ according to equation \ref{eq:lossdqn} with respect to weights $\theta$ 
+		\STATE Perform a gradient descent step on $L(y_j - Q(\phi_j, a_j ; \theta))$ with respect to weights $\theta$ 
 		\STATE Every $C$ steps update target network $Q'=Q$
 		\ENDFOR
 		\ENDFOR
@@ -110,7 +133,7 @@
 	This problem have been discussed by van Hasselt in \cite{doubleq}, where it was proposed the double q-learning algorithm as solution. In double q-learning two different estimators $Q$, $Q'$ are kept and alternately used for their updates as follow:
 	\begin{equation}
 		\label{eq:doubleq}
-		Q(s_t, a_t)=(1-\alpha)\cdot Q(s_t, a_t) + \alpha \cdot (r + \gamma\cdot Q'(s_{t+1}, argmax_aQ(s_{t+1}, a)))
+		Q(s_t, a_t)=(1-\alpha)\cdot Q(s_t, a_t) + \alpha \cdot (r + \gamma\cdot Q'(s_{t+1}, \text{argmax}_aQ(s_{t+1}, a)))
 	\end{equation}
 	This idea was then used in combination with deep q-learning; presented in \cite{doubledqn} from van Hassely et al., the resultant algorithm is called double DQN.
 	
@@ -157,8 +180,19 @@
 	As already said, the game used for the experiments is \textit{Gopher}. In this game the player controls a farmer and has to keep safe three carrots from a gopher. The gopher digs tunnels underground and try to to reach the surface. When this happen, he will eat a carrot and the player will lose a life. In the moment when all of the three carrots are eaten, the player loses the game. In order to avoid this, the player has to cover the holes that are present on the ground; for each covered hole the player's score will increase. Typical situations of the game are presented in image \ref{fig:gopher}.
 	
 	\begin{figure}
-		\includegraphics[width=\textwidth]{images/gopher}
-		\caption{Different in game situations. From left to right: game starting sitution, mole digging underground, mole reaching the soil, mole eating a carrots, farmer covering holes.}
+		\minipage{0.24\textwidth}
+		\includegraphics[width=\linewidth]{images/gopher2}
+		\endminipage\hfill
+		\minipage{0.24\textwidth}%
+		\includegraphics[width=\linewidth]{images/gopher4}
+		\endminipage\hfill
+		\minipage{0.24\textwidth}
+		\includegraphics[width=\linewidth]{images/gopher5}
+		\endminipage\hfill
+		\minipage{0.24\textwidth}%
+		\includegraphics[width=\linewidth]{images/gopher6}
+		\endminipage
+		\caption{Different in game situations. From left to right: gopher digs underground, gopher eats a carrots, farmer covers holes and gopher reaches the surface, birds with new seed.}
 		\label{fig:gopher}
 	\end{figure}	
 
@@ -174,17 +208,7 @@
 	The experiments on \textit{Gopher} consist in a comparison between a deep q-network, a double DQN and a dueling DQN which also uses the double deep q-learning algorithm. The structures of the trained DQN and double DQN consist in an input layer $(84\times84\times4)$ followed by 3 convolutional layers. The first layer has 32 filters of size $(8\times8)$ with strides 4 on each axis. The second layer has 64 filters of size $(4\times4)$ with strides 2. The last convolutional layer has 64 filters  of size $(3\times3)$ with strides 1. After the convolutional layers there are a fully connected layer with 512 output units and another fully connected layer with an output unit for each possible action in the game. Except for the input and output layer, after each layer there is a ReLU activation function.
 	
 	The dueling DQN presents the same architecture for the input layer and the convolutional layers. After the last convolutional layer the flow is divided in two stream: the advantage stream and the value stream. Both of them start with a fully connected layer with 512 output units. The advantage stream continues with a FC layer with an output unit for each action, while the value stream ends with a FC with 1 output unit. These two layers are then combined together as described by equation \ref{eq:dueling}. Similarly to the previous case, the layers are separated by a rectifier non-linearity.
-	As suggested in Mnih et al. (2015, Nature), in order to improve the stability of the algorithm,  the error term in the update is clipped between -1 and 1. This is achieved by using the Huber Loss as loss function\footnote{Or the equivalent error term of the double q network algorithm.}:
-	\begin{equation}
-		L_i(\theta_i) = \mathbb{E}_{s,a,r,s'\sim U(\mathcal{D})} \left[L_\delta \left( r + \gamma\cdot max_{a'}Q(s',a'; \theta'_i) - Q(s,a;\theta_i) \right) \right]
-	\end{equation}
-	\begin{equation}
-		L_{\delta}(a)  = 
-		\begin{cases}
-			\dfrac{1}{2}a^2 & \text{if $|a| \leq 1$}\\
-			\delta|x-y| - \dfrac{1}{2}\delta & \text{otherwise}
-		\end{cases}
-	\end{equation}
+	
 	For all the networks it was used the RMSProp optimizer with a learning rate of 0.00025 and a momentum of 0.95.
 	
 	The training consisted in a sequence of 2 million steps for each network, using random action in the first 50000 steps in order to populate the experience replay buffer, which had a total capacity of 100000 transitions. In order to have a good space exloration, the training used an $\epsilon$-greedy strategy with a decreasing $\epsilon$ from 1.0 to 0.1 in the first million steps. For the remaining part of the training the $\epsilon$ was constant at 0.1 so to mantain a little exploration. After the first 50000 steps, the network is updated after each action using a minibatch of 32 transitions uniformely sampled from the experience replay buffer. The target network is updated every 10000 steps.
@@ -194,15 +218,12 @@
 	\begin{figure}
 		\minipage{0.32\textwidth}
 		\includegraphics[width=\linewidth]{images/dqn_training_rewards}
-		%\caption{A really Awesome Image}\label{fig:awesome_image1}
 		\endminipage\hfill
 		\minipage{0.32\textwidth}
 		\includegraphics[width=\linewidth]{images/double_training_rewards}
-		%\caption{A really Awesome Image}\label{fig:awesome_image2}
 		\endminipage\hfill
 		\minipage{0.32\textwidth}%
-		\includegraphics[width=\linewidth]{images/dqn_training_rewards}
-		%\caption{A really Awesome Image}\label{fig:awesome_image3}
+		\includegraphics[width=\linewidth]{images/dueling_training_rewards}
 		\endminipage
 		\label{fig:average_reward}
 		\caption{Average rewards collected over 25 episodes during the training of DQN, double DQN and dueling DDQN.}
@@ -219,7 +240,7 @@
 			Random & $289.38 \pm 237.7$ & 1500 \\
 			DQN & $1283.02 \pm 718$ & 6400\\
 			Double DQN & $1288.4 \pm 722.4$ & 6380 \\
-			Dueling DDQN & & \\
+			Dueling DDQN & $906.04 \pm 504.6$ & 3100 \\
 			\hline
 		\end{tabular}
 		\caption{Comparison among the different q-networks, tested on 1000 games.}
@@ -230,7 +251,7 @@
 	
 	\section{Conclusion}
 	In this project it has been possible to study different learning algorithms and network architectures related to deep reinforcement learning. The developed models have been tested against the Atari 2600 game \textit{Gopher}, showing their capabilities at learning the game dynamics, despite not reaching the scores obtained in the referenced papers. The reason is attributable to the smaller training time. Anyway, all of the trained models has shown to play way better than a random agent.
-	On top of that, it has already shown that is possible to learn better policies by using prioritized experience replay \cite{prioritized} in the learning algorithm. This mechanism gives a different weight to the transitions stored in the experience replay buffer based on their temporal error. By prioritizing the examples in this way, the more significative ones has a greater probability of being chosen, leading to a better learning.
+	On top of that, it's possible to learn better policies by using prioritized experience replay \cite{prioritized} in the learning algorithm. This mechanism gives a different weight to the transitions stored in the experience replay buffer based on their temporal error. By prioritizing the examples in this way, the more significative ones has a greater probability of being chosen, leading to a better learning.
 	
 	\bibliography{bibliography}
 	\bibliographystyle{plain}
