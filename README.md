@@ -36,10 +36,10 @@ print(gs.games_rewards)
 ## References
 The work is based on the following list of articles:
 
-* (Playing Atari with Deep Reinforcement Learning)[https://arxiv.org/abs/1312.5602]
-* (Human-level control through deep reinforcement learning)[https://storage.googleapis.com/deepmind-media/dqn/DQNNaturePaper.pdf]
-* (Deep Reinforcement Learning with Double Q-learning)[https://arxiv.org/abs/1509.06461]
-* (Dueling Network Architectures for Deep Reinforcement Learning)[https://arxiv.org/abs/1511.06581]
+* [Playing Atari with Deep Reinforcement Learning](https://arxiv.org/abs/1312.5602)
+* [Human-level control through deep reinforcement learning](https://storage.googleapis.com/deepmind-media/dqn/DQNNaturePaper.pdf)
+* [Deep Reinforcement Learning with Double Q-learning](https://arxiv.org/abs/1509.06461)
+* [Dueling Network Architectures for Deep Reinforcement Learning](https://arxiv.org/abs/1511.06581)
 
 ## Authors
 
