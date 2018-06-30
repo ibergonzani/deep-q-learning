@@ -4,7 +4,9 @@ Implementations of deep q-networn, dueling q-network with base or double q-learn
 ## Prerequisites
 
 The project is implemented using Python 3.5 and Tensorflow (tested with tensorflow-gpu 1.2.1).
-The usable environments are from OpenAi Gym. For installing gym look at https://github.com/openai/gym 
+
+The usable environments are from OpenAi Gym. For installing gym look at https://github.com/openai/gym.
+
 To work need atari_wrappers.py from https://github.com/openai/baselines/blob/master/baselines/common/atari_wrappers.py
 
 ##  Train a network
