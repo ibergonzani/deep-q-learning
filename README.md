@@ -13,7 +13,7 @@ To work need atari_wrappers.py from https://github.com/openai/baselines/blob/mas
 Networks training is performed using the train.py module. It requires as parameter the gym environment to be learned. Optionally it is possible to specify the type of network and learning algorithm to be used. Training can restart from a checkpoint using the --checkpoint argument to provide the network weights and --training_info argument to provide the training status (es. current step, total steps, experience replay buffer data). By using --checkpoint_step it is possible to specify after how many steps a checkpoint is saved.
 
 ```
->python train.py --environment PongNoFrameskip-v0 --network doubledqn --checkpoint path/to/weights --training_info path/to/training_info
+python train.py --environment PongNoFrameskip-v0 --network doubledqn --checkpoint path/to/weights --training_info path/to/training_info
 ```
 
 ## Test a network
@@ -21,7 +21,7 @@ Networks training is performed using the train.py module. It requires as paramet
 The developed models can be tested using the test.py module. It requires the environment and the model weights as arguments (weights must correspond to the specified network type). It is possible to specify the epsilon-greedy value that determines the ratio between network action and random actions.  The argument --show will render the game. 
 
 ```
->python test.py --environment PongNoFrameskip-v0 --network doubledqn --model path/to/weights --epsilon 0.05 --num_games 100 --show
+python test.py --environment PongNoFrameskip-v0 --network doubledqn --model path/to/weights --epsilon 0.05 --num_games 100 --show
 ```
 
 The output will be a the average collected score and the max score. Moreover it will be saved a file containing all the rewards collected during the test. Use PickleSerializer and GameStats in util.py to read the content.
